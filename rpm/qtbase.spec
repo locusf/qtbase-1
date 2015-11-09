@@ -6,8 +6,7 @@ Release:    1%{?dist}
 Group:      Qt/Qt
 License:    LGPLv2.1 with exception or GPLv3
 URL:        http://qt.nokia.com
-#Source0:    %{name}-%{version}.tar.xz
-Patch1:     add-rpi-platform-plugin.patch
+Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  qt5-qtcore-devel
 BuildRequires:  qt5-qtopengl-devel
 BuildRequires:  qt5-qtgui-devel
