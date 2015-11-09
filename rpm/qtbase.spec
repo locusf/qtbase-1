@@ -32,7 +32,7 @@ This package contains a Qt platform plugin for Raspberry Pi
 #### Build section
 
 %prep
-%setup -q -n qt5-%{version}
+%setup -q -n qt5-qtplatformplugin-rpi-%{version}
 
 %build
 touch .git
