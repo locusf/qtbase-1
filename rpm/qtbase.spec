@@ -32,12 +32,14 @@ This package contains a Qt platform plugin for Raspberry Pi
 #### Build section
 
 %prep
-touch .git
+%setup -q -n qt5-%{version}
+
 %build
+touch .git
 export QTDIR=/usr/share/qt5
 export INSTALLBASE=/usr
 
-cd plugins/platforms/qtplatformplugin-rpi
+cd src/plugins/platforms/qtplatformplugin-rpi
 cp ../eglfs/cursor-atlas.png .
 
 qmake -qt=5
