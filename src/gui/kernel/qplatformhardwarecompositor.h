@@ -1,9 +1,9 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2015 Jolla Ltd, author: <gunnar.sletta@jollamobile.com>
 ** Contact: http://www.qt-project.org/legal
 **
-** This file is part of the plugins of the Qt Toolkit.
+** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** Commercial License Usage
@@ -39,40 +39,42 @@
 **
 ****************************************************************************/
 
-#ifndef QEGLFSCONTEXT_H
-#define QEGLFSCONTEXT_H
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is part of the QPA API and is not meant to be used
+// in applications. Usage of this API may make your code
+// source and binary incompatible with future versions of Qt.
+//
 
-#include <QtPlatformSupport/private/qeglconvenience_p.h>
-#include <QtPlatformSupport/private/qeglplatformcontext_p.h>
+#ifndef QPLATFORMHARDWARECOMPOSITOR_H
+#define QPLATFORMHARDWARECOMPOSITOR_H
+
+#include <QtGui/QMatrix4x4>
+#include <QtGui/QColor>
 
 QT_BEGIN_NAMESPACE
 
-class QOpenGLFramebufferObject;
-class Blitter;
+class QPlatformGraphicsBuffer;
 
-class QEglFSContext : public QEGLPlatformContext
+class Q_GUI_EXPORT QPlatformHardwareCompositor : public QObject
 {
+    Q_OBJECT
+
 public:
-    QEglFSContext(const QSurfaceFormat &format, QPlatformOpenGLContext *share, EGLDisplay display,
-                  EGLenum eglApi = EGL_OPENGL_ES_API);
-    ~QEglFSContext();
-    bool makeCurrent(QPlatformSurface *surface);
-    EGLSurface eglSurfaceForPlatformSurface(QPlatformSurface *surface);
-    void swapBuffers(QPlatformSurface *surface);
-    GLuint defaultFramebufferObject(QPlatformSurface *surface) const;
-
-private:
-    QOpenGLFramebufferObject *fbo(QPlatformSurface *surface) const;
-
-    bool m_swapIntervalSet;
-    bool m_useNativeDefaultFbo;
-    mutable QOpenGLFramebufferObject *m_fbo;
-    Blitter *m_blitter;
-    int m_scale;
-
-    friend class Blitter;
+    struct Layer {
+        Layer();
+        QMatrix4x4 transform;
+        qreal opacity;
+        QRectF subRect;
+        QColor color;
+        QPlatformGraphicsBuffer *buffer;
+    };
+    virtual ~QPlatformHardwareCompositor() {}
+    virtual bool compose(const QVector<Layer> &layers) = 0;
 };
 
 QT_END_NAMESPACE
 
-#endif // QEGLFSCONTEXT_H
+#endif // QPLATFORMHARDWARECOMPOSITOR_H

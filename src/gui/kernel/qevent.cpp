@@ -274,6 +274,24 @@ QMouseEvent::~QMouseEvent()
 {
 }
 
+/*!
+  \since 5.3
+
+  Returns information about the mouse event source.
+
+  The mouse event source can be used to distinguish between genuine
+  and artificial mouse events. The latter are events that are
+  synthesized from touch events by the operating system or Qt itself.
+
+  \note Many platforms provide no such information. On such platforms
+  \l Qt::MouseEventNotSynthesized is returned always.
+
+  \sa Qt::MouseEventSource
+ */
+Qt::MouseEventSource QMouseEvent::source() const
+{
+    return QGuiApplicationPrivate::mouseEventSource(this);
+}
 
 /*!
     \fn QPointF QMouseEvent::localPos() const
@@ -1282,6 +1300,55 @@ QExposeEvent::QExposeEvent(const QRegion &exposeRegion)
   \internal
 */
 QExposeEvent::~QExposeEvent()
+{
+}
+
+/*!
+    \class QPlatformSurfaceEvent
+    \since 5.5
+    \brief The QPlatformSurfaceEvent class is used to notify about native platform surface events.
+    \inmodule QtGui
+
+    \ingroup events
+
+    Platform window events are synchronously sent to windows and offscreen surfaces when their
+    underlying native surfaces are created or are about to be destroyed.
+
+    Applications can respond to these events to know when the underlying platform
+    surface exists.
+*/
+
+/*!
+    \enum QPlatformSurfaceEvent::SurfaceEventType
+
+    This enum describes the type of platform surface event. The possible types are:
+
+    \value SurfaceCreated               The underlying native surface has been created
+    \value SurfaceAboutToBeDestroyed    The underlying native surface will be destroyed immediately after this event
+
+    The \c SurfaceAboutToBeDestroyed event type is useful as a means of stopping rendering to
+    a platform window before it is destroyed.
+*/
+
+/*!
+    \fn QPlatformSurfaceEvent::SurfaceEventType QPlatformSurfaceEvent::surfaceEventType() const
+
+    Returns the specific type of platform surface event.
+*/
+
+/*!
+    Constructs a platform surface event for the given \a surfaceEventType.
+*/
+QPlatformSurfaceEvent::QPlatformSurfaceEvent(SurfaceEventType surfaceEventType)
+    : QEvent(PlatformSurface)
+    , m_surfaceEventType(surfaceEventType)
+{
+}
+
+/*!
+  \internal
+*/
+QPlatformSurfaceEvent::~QPlatformSurfaceEvent()
 {
 }
 

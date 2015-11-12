@@ -56,6 +56,7 @@ QElapsedTimer QWindowSystemInterfacePrivate::eventTime;
 bool QWindowSystemInterfacePrivate::synchronousWindowsSystemEvents = false;
 QWaitCondition QWindowSystemInterfacePrivate::eventsFlushed;
 QMutex QWindowSystemInterfacePrivate::flushEventMutex;
+QWindowSystemEventHandler *QWindowSystemInterfacePrivate::eventHandler;
 
 //------------------------------------------------------------
 //
@@ -164,31 +165,35 @@ void QWindowSystemInterface::handleCloseEvent(QWindow *tlw, bool *accepted)
 \a w == 0 means that the event is in global coords only, \a local will be ignored in this case
 
 */
-void QWindowSystemInterface::handleMouseEvent(QWindow *w, const QPointF & local, const QPointF & global, Qt::MouseButtons b, Qt::KeyboardModifiers mods)
+void QWindowSystemInterface::handleMouseEvent(QWindow *w, const QPointF & local, const QPointF & global, Qt::MouseButtons b,
+                                              Qt::KeyboardModifiers mods, Qt::MouseEventSource source)
 {
     unsigned long time = QWindowSystemInterfacePrivate::eventTime.elapsed();
-    handleMouseEvent(w, time, local, global, b, mods);
+    handleMouseEvent(w, time, local, global, b, mods, source);
 }
 
-void QWindowSystemInterface::handleMouseEvent(QWindow *w, ulong timestamp, const QPointF & local, const QPointF & global, Qt::MouseButtons b, Qt::KeyboardModifiers mods)
+void QWindowSystemInterface::handleMouseEvent(QWindow *w, ulong timestamp, const QPointF & local, const QPointF & global, Qt::MouseButtons b,
+                                              Qt::KeyboardModifiers mods, Qt::MouseEventSource source)
 {
     QWindowSystemInterfacePrivate::MouseEvent * e =
-            new QWindowSystemInterfacePrivate::MouseEvent(w, timestamp, local, global, b, mods);
+        new QWindowSystemInterfacePrivate::MouseEvent(w, timestamp, local, global, b, mods, source);
     QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
 }
 
-void QWindowSystemInterface::handleFrameStrutMouseEvent(QWindow *w, const QPointF & local, const QPointF & global, Qt::MouseButtons b, Qt::KeyboardModifiers mods)
+void QWindowSystemInterface::handleFrameStrutMouseEvent(QWindow *w, const QPointF & local, const QPointF & global, Qt::MouseButtons b,
+                                                        Qt::KeyboardModifiers mods, Qt::MouseEventSource source)
 {
     const unsigned long time = QWindowSystemInterfacePrivate::eventTime.elapsed();
-    handleFrameStrutMouseEvent(w, time, local, global, b, mods);
+    handleFrameStrutMouseEvent(w, time, local, global, b, mods, source);
 }
 
-void QWindowSystemInterface::handleFrameStrutMouseEvent(QWindow *w, ulong timestamp, const QPointF & local, const QPointF & global, Qt::MouseButtons b, Qt::KeyboardModifiers mods)
+void QWindowSystemInterface::handleFrameStrutMouseEvent(QWindow *w, ulong timestamp, const QPointF & local, const QPointF & global, Qt::MouseButtons b,
+                                                        Qt::KeyboardModifiers mods, Qt::MouseEventSource source)
 {
     QWindowSystemInterfacePrivate::MouseEvent * e =
             new QWindowSystemInterfacePrivate::MouseEvent(w, timestamp,
                                                           QWindowSystemInterfacePrivate::FrameStrutMouse,
-                                                          local, global, b, mods);
+                                                          local, global, b, mods, source);
     QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
 }
 
@@ -571,12 +576,30 @@ bool QWindowSystemInterface::sendWindowSystemEvents(QEventLoop::ProcessEventsFla
                 QWindowSystemInterfacePrivate::getWindowSystemEvent();
         if (!event)
             break;
-        nevents++;
-        QGuiApplicationPrivate::processWindowSystemEvent(event);
+
+        if (QWindowSystemInterfacePrivate::eventHandler) {
+            if (QWindowSystemInterfacePrivate::eventHandler->sendEvent(event))
+                nevents++;
+        } else {
+            nevents++;
+            QGuiApplicationPrivate::processWindowSystemEvent(event);
+        }
         delete event;
     }
 
     return (nevents > 0);
+}
+
+void QWindowSystemInterfacePrivate::installWindowSystemEventHandler(QWindowSystemEventHandler *handler)
+{
+    if (!eventHandler)
+        eventHandler = handler;
+}
+
+void QWindowSystemInterfacePrivate::removeWindowSystemEventhandler(QWindowSystemEventHandler *handler)
+{
+    if (eventHandler == handler)
+        eventHandler = 0;
 }
 
 void QWindowSystemInterface::setSynchronousWindowsSystemEvents(bool enable)
@@ -774,6 +797,17 @@ Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device,
                                 Qt::KeyboardModifiers mods = Qt::NoModifier)
 {
     QWindowSystemInterface::handleTouchEvent(w, device, touchPointList(points), mods);
+}
+
+QWindowSystemEventHandler::~QWindowSystemEventHandler()
+{
+    QWindowSystemInterfacePrivate::removeWindowSystemEventhandler(this);
+}
+
+bool QWindowSystemEventHandler::sendEvent(QWindowSystemInterfacePrivate::WindowSystemEvent *e)
+{
+    QGuiApplicationPrivate::processWindowSystemEvent(e);
+    return true;
 }
 
 QT_END_NAMESPACE

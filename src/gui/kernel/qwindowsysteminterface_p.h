@@ -62,6 +62,8 @@
 
 QT_BEGIN_NAMESPACE
 
+class QWindowSystemEventHandler;
+
 class Q_GUI_EXPORT QWindowSystemInterfacePrivate {
 public:
     enum EventType {
@@ -209,14 +211,17 @@ public:
     class MouseEvent : public InputEvent {
     public:
         MouseEvent(QWindow * w, ulong time, const QPointF & local, const QPointF & global,
-                   Qt::MouseButtons b, Qt::KeyboardModifiers mods)
-            : InputEvent(w, time, Mouse, mods), localPos(local), globalPos(global), buttons(b) { }
+                   Qt::MouseButtons b, Qt::KeyboardModifiers mods,
+                   Qt::MouseEventSource src = Qt::MouseEventNotSynthesized)
+            : InputEvent(w, time, Mouse, mods), localPos(local), globalPos(global), buttons(b), source(src) { }
         MouseEvent(QWindow * w, ulong time, EventType t, const QPointF & local, const QPointF & global,
-                   Qt::MouseButtons b, Qt::KeyboardModifiers mods)
-            : InputEvent(w, time, t, mods), localPos(local), globalPos(global), buttons(b) { }
+                   Qt::MouseButtons b, Qt::KeyboardModifiers mods,
+                   Qt::MouseEventSource src = Qt::MouseEventNotSynthesized)
+            : InputEvent(w, time, t, mods), localPos(local), globalPos(global), buttons(b), source(src) { }
         QPointF localPos;
         QPointF globalPos;
         Qt::MouseButtons buttons;
+        Qt::MouseEventSource source;
     };
 
     class WheelEvent : public InputEvent {
@@ -483,6 +488,17 @@ public:
     static QMutex flushEventMutex;
 
     static QList<QTouchEvent::TouchPoint> convertTouchPoints(const QList<QWindowSystemInterface::TouchPoint> &points, QEvent::Type *type);
+
+    static void installWindowSystemEventHandler(QWindowSystemEventHandler *handler);
+    static void removeWindowSystemEventhandler(QWindowSystemEventHandler *handler);
+    static QWindowSystemEventHandler *eventHandler;
+};
+
+class Q_GUI_EXPORT QWindowSystemEventHandler
+{
+public:
+    virtual ~QWindowSystemEventHandler();
+    virtual bool sendEvent(QWindowSystemInterfacePrivate::WindowSystemEvent *event);
 };
 
 QT_END_NAMESPACE

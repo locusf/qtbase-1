@@ -135,6 +135,8 @@ public:
     QT_DEPRECATED inline QPointF posF() const { return l; }
 #endif
 
+    Qt::MouseEventSource source() const;
+
 protected:
     QPointF l, w, s;
     Qt::MouseButton b;
@@ -405,6 +407,23 @@ public:
 
 protected:
     QRegion rgn;
+};
+
+class Q_GUI_EXPORT QPlatformSurfaceEvent : public QEvent
+{
+public:
+    enum SurfaceEventType {
+        SurfaceCreated,
+        SurfaceAboutToBeDestroyed
+    };
+
+    explicit QPlatformSurfaceEvent(SurfaceEventType surfaceEventType);
+    ~QPlatformSurfaceEvent();
+
+    inline SurfaceEventType surfaceEventType() const { return m_surfaceEventType; }
+
+protected:
+    SurfaceEventType m_surfaceEventType;
 };
 
 class Q_GUI_EXPORT QResizeEvent : public QEvent
