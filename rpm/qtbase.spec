@@ -1,6 +1,6 @@
 # Conditional building of X11 related things
 %bcond_with X11
-
+%define X11 0
 # libQtPlatformSupport is not built as a shared library, only as a
 # static .a lib-archive. By default the OBS build removes all discovered
 # libFOO.a files and as such rpmlint never complains about
